@@ -33,3 +33,70 @@ class Mesh:
         self.position = np.array([0.0, 0.0, 0.0])
         self.rotation = np.array([0.0, 0.0, 0.0])
         self.scale = np.array([1.0, 1.0, 1.0])
+
+
+def load_mesh_from_obj(filename):
+    vertices = []
+    faces = []
+    texture_coordinates = []
+    normals = []  # not used in this implementation
+
+    with open(filename, "r") as f:
+        lines = f.readlines()
+        for line in lines:
+            splits = line.strip().split()
+            if not splits:
+                continue
+            if splits[0] == "v":
+                # x, y, z, (w=1.0)
+                vertex = list(map(float, splits[1:]))
+                if len(vertex) == 3:
+                    vertex.append(1.0)
+                vertices.append(vertex)
+            elif splits[0] == "vt":
+                # u, v
+                texture_coordinate = list(map(float, splits[1:]))
+                texture_coordinates.append(texture_coordinate)
+            elif splits[0] == "vn":
+                normals.append(list(map(float, splits[1:])))
+            elif splits[0] == "f":
+                # face can be in the following formats:
+                # f v1 v2 v3 ....
+                # f v1/vt1 v2/vt2 v3/vt3 ....
+                # f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3 ....
+                # f v1//vn1 v2//vn2 v3//vn3 ....
+                face = []
+                for vertex in splits[1:]:
+                    vertex = vertex.split("/")
+                    indices = {"v": None, "vt": None, "vn": None}
+                    indices["v"] = int(vertex[0]) - 1
+                    if len(vertex) > 1 and vertex[1] != "":
+                        indices["vt"] = int(vertex[1]) - 1
+                    if len(vertex) > 2:
+                        indices["vn"] = int(vertex[2]) - 1
+
+                    face.append(indices)
+
+                if len(face) == 3:
+                    faces.append(face)
+                elif len(face) > 3:
+                    # triangulate the face
+                    for i in range(1, len(face) - 1):
+                        faces.append([face[0], face[i], face[i + 1]])
+    mesh_faces = []
+    for face in faces:
+        face_vertex_indices = [v["v"] for v in face]
+        face_model_vertices = np.array([vertices[v["v"]] for v in face]).T
+        face_texture = None
+        if all(v["vt"] is not None for v in face):
+            face_texture = np.array([texture_coordinates[v["vt"]] for v in face]).T
+        mesh_faces.append(
+            Face(
+                model_vertices=face_model_vertices,
+                texture_coordinates=face_texture,
+                vertex_indices=face_vertex_indices,
+            )
+        )
+
+    mesh = Mesh(model_vertices=np.array(vertices).T, faces=mesh_faces)
+    return mesh
