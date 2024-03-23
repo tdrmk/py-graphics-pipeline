@@ -100,3 +100,15 @@ def load_mesh_from_obj(filename):
 
     mesh = Mesh(model_vertices=np.array(vertices).T, faces=mesh_faces)
     return mesh
+
+
+if __name__ == "__main__":
+    # test the mesh loading
+    mesh = load_mesh_from_obj("models/cube.obj")
+    print(mesh.model_vertices)
+
+    for i, face in enumerate(mesh.faces):
+        print(f"\nFace {i}")
+        print("model vertices:\n", face.model_vertices)
+        print("texture coordinates:\n", face.texture_coordinates)
+        print("vertex indices:", face.vertex_indices)
