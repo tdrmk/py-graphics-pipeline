@@ -35,6 +35,14 @@ class Mesh:
         self.scale = np.array([1.0, 1.0, 1.0])
 
 
+def load_texture_from_image(filename):
+    texture = pygame.image.load(filename)
+    # Note: flip the texture vertically, to align the coordinate systems
+    texture = pygame.transform.flip(texture, False, True)
+    texture = pygame.surfarray.array3d(texture)
+    return texture
+
+
 def load_mesh_from_obj(filename):
     vertices = []
     faces = []
