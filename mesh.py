@@ -41,7 +41,7 @@ class Mesh:
         return translate(*self.position) @ rotate(*self.rotation) @ scale(*self.scale)
 
 
-def load_texture_from_image(filename):
+def load_texture_from_image(filename) -> np.ndarray:
     texture = pygame.image.load(filename)
     # Note: flip the texture vertically, to align the coordinate systems
     texture = pygame.transform.flip(texture, False, True)
@@ -49,7 +49,7 @@ def load_texture_from_image(filename):
     return texture
 
 
-def load_mesh_from_obj(filename):
+def load_mesh_from_obj(filename) -> Mesh:
     vertices = []
     faces = []
     texture_coordinates = []
