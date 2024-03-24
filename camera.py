@@ -5,6 +5,12 @@ import pygame
 TRANSLATION_SPEED = 5.0
 ROTATION_SPEED = 1.0
 
+UP = np.array([0.0, 1.0, 0.0])
+# the maximum pitch angle the camera can have
+# this is to prevent the camera from flipping,
+# and forwards and up vectors from being parallel
+MAX_PITCH = np.deg2rad(75.0)
+
 
 class Camera:
     def __init__(self, fov, aspect_ratio, near, far):
@@ -18,10 +24,10 @@ class Camera:
         self.look_at(
             eye=np.array([0.0, 0.0, 0.0]),
             forward=np.array([0.0, 0.0, 1.0]),
-            up=np.array([0.0, 1.0, 0.0]),
+            up=UP,
         )
 
-    def look_at(self, eye, forward=None, up=np.array([0, 1.0, 0]), target=None):
+    def look_at(self, eye, forward=None, up=UP, target=None):
         # using the right-handed coordinate system
         # eye: the position of the camera
         # camera's orientation is specified either by forward or target
@@ -109,6 +115,12 @@ class Camera:
             # and then update the camera to look at the new forward vector
             forward = rotate(*rotation) @ np.array([*self.forward, 1.0]).T
             forward = normalize(forward[:3])
+
+            if np.abs(np.dot(forward, UP)) > np.cos(np.pi / 2 - MAX_PITCH):
+                # we don't want the camera's forward vector to be parallel to the up vector
+                # as this would cause the camera to flip
+                print("camera rotation clamped")
+                return
 
             self.look_at(eye=self.position, forward=forward)
 
