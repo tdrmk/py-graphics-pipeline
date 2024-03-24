@@ -17,6 +17,7 @@ if __name__ == "__main__":
     def rotate_mesh(dt):
         mesh.rotation += np.array([1, 0, 0]) * dt
 
+    game.add_update_func(camera.update)
     game.add_update_func(rotate_mesh)
     game.add_update_func(lambda _: graphics_pipeline.update())
     game.run()
