@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+from transformations import translate, rotate, scale
 
 
 class Face:
@@ -33,6 +34,11 @@ class Mesh:
         self.position = np.array([0.0, 0.0, 0.0])
         self.rotation = np.array([0.0, 0.0, 0.0])
         self.scale = np.array([1.0, 1.0, 1.0])
+
+    @property
+    def world_matrix(self):
+        # transforms from model space to world space
+        return translate(*self.position) @ rotate(*self.rotation) @ scale(*self.scale)
 
 
 def load_texture_from_image(filename):
