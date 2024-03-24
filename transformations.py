@@ -92,3 +92,15 @@ def perspective(fov, aspect, near, far):
 def rotate(x, y, z):
     # tait-bryan angles y-x-z (random order, just for fun)
     return rotate_z(z) @ rotate_x(x) @ rotate_y(y)
+
+
+def viewport(width, height):
+    # converts from image space to screen space
+    return np.array(
+        [
+            [width / 2.0, 0.0, 0.0, width / 2.0],
+            [0.0, height / 2.0, 0.0, height / 2.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+    )
