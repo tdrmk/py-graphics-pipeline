@@ -7,11 +7,12 @@ import numpy as np
 
 FOV = np.deg2rad(60)
 if __name__ == "__main__":
-    mesh = load_mesh_from_obj("models/cube_far.obj")
+    mesh = load_mesh_from_obj("models/cube.obj")
     camera = Camera(FOV, WIDTH / HEIGHT, 0.1, 1000)
     game = Game()
     graphics_pipeline = GraphicsPipeline([mesh], camera, game.screen)
     game.add_draw_func(graphics_pipeline.draw)
+    mesh.position = np.array([0, 0, 5])
 
     def rotate_mesh(dt):
         mesh.rotation += np.array([1, 0, 0]) * dt
