@@ -1,6 +1,6 @@
 import pygame
 import numpy as np
-from transformations import translate, rotate, scale
+from transformations import translate, rotate, scale, normalize
 
 
 class Face:
@@ -19,6 +19,15 @@ class Face:
         self.image_vertices = None
         # screen coordinates after viewport transformation
         self.screen_vertices = None
+
+    @property
+    def world_normal(self):
+        return normalize(
+            np.cross(
+                self.world_vertices[:3, 2] - self.world_vertices[:3, 0],
+                self.world_vertices[:3, 1] - self.world_vertices[:3, 0],
+            )
+        )
 
 
 class Mesh:
