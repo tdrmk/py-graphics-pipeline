@@ -34,6 +34,10 @@ class Game:
             if event.type == pygame.QUIT:
                 self.running = False
 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    self.running = False
+
     def update(self):
         caption = f"Graphics Pipeline - FPS: {self.clock.get_fps():.2f}"
         pygame.display.set_caption(caption)
