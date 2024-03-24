@@ -1,5 +1,35 @@
 # py-graphics-pipeline
+
 Building a simple graphics pipeline which renders 3d model to the screen.
+
+## How to install and run the program
+
+This program is written in **python3**. Make sure you have python installed in your system.
+
+To install dependencies run
+
+    python3 -m pip install -r requirements.txt
+
+
+To start the program run
+
+    python3 main.py
+
+
+To control the camera, use the following keys:
+
+    W   move forward
+    S   move backward
+    A   move left
+    D   move right
+    R   move up
+    F   move down
+
+    ↑   rotate up
+    ↓   rotate down
+    ←   rotate left
+    →   rotate right
+
 
 ## References
 - [How do Video Game Graphics Work?](https://www.youtube.com/watch?v=C8YtdC8mxTU) :star:
