@@ -62,7 +62,7 @@ class GraphicsPipeline:
         width, height = self.screen.get_size()
 
         # z buffer for hidden surface removal
-        z_buffer = np.full((width, height), 1)
+        z_buffer = np.full((width, height), 1.0, dtype=np.float32)
         # display buffer to store the final image to be displayed
         display_buffer = np.zeros((width, height, 3), dtype=np.uint8)
 
