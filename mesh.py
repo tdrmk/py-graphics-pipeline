@@ -20,6 +20,9 @@ class Face:
         # screen coordinates after viewport transformation
         self.screen_vertices = None
 
+        # setting up some default color
+        self.color = (255, 255, 255)
+
     @property
     def world_normal(self):
         return normalize(

@@ -1,6 +1,7 @@
 import pygame
 from transformations import viewport, normalize
 import numpy as np
+from rasterizer import draw_triangle
 
 
 class GraphicsPipeline:
@@ -50,17 +51,36 @@ class GraphicsPipeline:
 
             # update the face's with transformed vertices
             for face in faces_to_draw:
-                face.screen_vertices = screen_vertices[:, face.vertex_indices]
+                # w component is not needed anymore (it's always 1)
+                face.screen_vertices = screen_vertices[:3, face.vertex_indices]
 
             self.faces_to_draw.extend(faces_to_draw)
 
     def draw(self):
         # draws the mesh's screen vertices onto the screen
         # ie, the rasterization step
-        self.screen.fill((0, 0, 0))
+        width, height = self.screen.get_size()
+
+        # z buffer for hidden surface removal
+        z_buffer = np.full((width, height), 1)
+        # display buffer to store the final image to be displayed
+        display_buffer = np.zeros((width, height, 3), dtype=np.uint8)
+
         for face in self.faces_to_draw:
             if face.screen_vertices is None:
                 continue
-            color = (255, 255, 255)
+            color = face.color
+            # draw the triangle onto the display buffer,
+            # looking up the z buffer for hidden surface removal
+            draw_triangle(face.screen_vertices, display_buffer, z_buffer, color)
+
+        # blit the display buffer onto the screen
+        pygame.surfarray.blit_array(self.screen, display_buffer)
+
+        # draw wireframe
+        for face in self.faces_to_draw:
+            if face.screen_vertices is None:
+                continue
+            color = (255, 0, 0)
             points = face.screen_vertices[:2].T
             pygame.draw.polygon(self.screen, color, points, 1)
