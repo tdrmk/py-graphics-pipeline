@@ -5,10 +5,11 @@ from rasterizer import draw_triangle
 
 
 class GraphicsPipeline:
-    def __init__(self, meshs, camera, screen: pygame.Surface):
+    def __init__(self, meshs, camera, screen: pygame.Surface, shader=None):
         self.meshs = meshs
         self.camera = camera
         self.screen = screen
+        self.shader = shader
 
     def update(self):
         # transform vertices from model space to screen space
@@ -39,6 +40,13 @@ class GraphicsPipeline:
                 if np.dot(world_normal, camera_to_face) >= 0:
                     continue
 
+                if self.shader is not None:
+                    face_center = face.world_vertices[:3].mean(axis=1)
+                    # store the face's light intensity for later use
+                    # will be combined with the texture color to get the final color at the pixel
+                    face.light_intensity = self.shader.light_intensity(
+                        world_normal, face_center, camera_position
+                    )
                 faces_to_draw.append(face)
 
             # world space to clip space
@@ -69,7 +77,7 @@ class GraphicsPipeline:
         for face in self.faces_to_draw:
             if face.screen_vertices is None:
                 continue
-            color = face.color
+            color = self.shader.get_color(*face.light_intensity, (255, 255, 255))
             # draw the triangle onto the display buffer,
             # looking up the z buffer for hidden surface removal
             draw_triangle(face.screen_vertices, display_buffer, z_buffer, color)

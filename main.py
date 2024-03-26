@@ -2,15 +2,17 @@ from mesh import load_mesh_from_obj
 from graphics_pipeline import GraphicsPipeline
 from game import Game, WIDTH, HEIGHT
 from camera import Camera
+from shading import PixelShader
 import numpy as np
 
 
 FOV = np.deg2rad(60)
 if __name__ == "__main__":
     mesh = load_mesh_from_obj("models/cube.obj")
-    camera = Camera(FOV, WIDTH / HEIGHT, 0.1, 1000)
+    camera = Camera(FOV, WIDTH / HEIGHT, 1, 100.0)
+    shader = PixelShader(light_direction=np.array([0, 0, 1]))
     game = Game()
-    graphics_pipeline = GraphicsPipeline([mesh], camera, game.screen)
+    graphics_pipeline = GraphicsPipeline([mesh], camera, game.screen, shader=shader)
     game.add_draw_func(graphics_pipeline.draw)
     mesh.position = np.array([0, 0, 5])
 
