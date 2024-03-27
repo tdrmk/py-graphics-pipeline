@@ -20,7 +20,6 @@ class GraphicsPipeline:
         viewport_matrix = viewport(*self.screen.get_size())
         camera_position = self.camera.position
 
-        self.faces_to_draw = []
         for mesh in self.meshs:
             faces_to_draw = []  # we'll computes faces to draw for each mesh
 
@@ -62,7 +61,7 @@ class GraphicsPipeline:
                 # w component is not needed anymore (it's always 1)
                 face.screen_vertices = screen_vertices[:3, face.vertex_indices]
 
-            self.faces_to_draw.extend(faces_to_draw)
+            mesh.faces_to_draw = faces_to_draw
 
     def draw(self):
         # draws the mesh's screen vertices onto the screen
@@ -74,21 +73,23 @@ class GraphicsPipeline:
         # display buffer to store the final image to be displayed
         display_buffer = np.zeros((width, height, 3), dtype=np.uint8)
 
-        for face in self.faces_to_draw:
-            if face.screen_vertices is None:
-                continue
-            color = self.shader.get_color(*face.light_intensity, (255, 255, 255))
-            # draw the triangle onto the display buffer,
-            # looking up the z buffer for hidden surface removal
-            draw_triangle(face.screen_vertices, display_buffer, z_buffer, color)
+        for mesh in self.meshs:
+            for face in mesh.faces_to_draw:
+                if face.screen_vertices is None:
+                    continue
+                color = self.shader.get_color(*face.light_intensity, (255, 255, 255))
+                # draw the triangle onto the display buffer,
+                # looking up the z buffer for hidden surface removal
+                draw_triangle(face.screen_vertices, display_buffer, z_buffer, color)
 
         # blit the display buffer onto the screen
         pygame.surfarray.blit_array(self.screen, display_buffer)
 
         # draw wireframe
-        for face in self.faces_to_draw:
-            if face.screen_vertices is None:
-                continue
-            color = (255, 0, 0)
-            points = face.screen_vertices[:2].T
-            pygame.draw.polygon(self.screen, color, points, 1)
+        for mesh in self.meshs:
+            for face in mesh.faces_to_draw:
+                if face.screen_vertices is None:
+                    continue
+                color = (255, 0, 0)
+                points = face.screen_vertices[:2].T
+                pygame.draw.polygon(self.screen, color, points, 1)
