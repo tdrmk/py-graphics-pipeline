@@ -2,6 +2,17 @@ import pygame
 from transformations import viewport, normalize
 import numpy as np
 from rasterizer import draw_triangle
+import clipping_functions
+
+CLIPPING_PLANES = [
+    clipping_functions.w_equals_0(),
+    clipping_functions.w_equals_x(),
+    clipping_functions.w_equals_neg_x(),
+    clipping_functions.w_equals_y(),
+    clipping_functions.w_equals_neg_y(),
+    clipping_functions.z_equals_0(),
+    clipping_functions.w_equals_z(),
+]
 
 
 class GraphicsPipeline:
@@ -22,6 +33,7 @@ class GraphicsPipeline:
 
         for mesh in self.meshs:
             faces_to_draw = []  # we'll computes faces to draw for each mesh
+            front_faces = []  # faces that are facing the camera
 
             world_matrix = mesh.world_matrix
             model_vertices = mesh.model_vertices
@@ -46,20 +58,28 @@ class GraphicsPipeline:
                     face.light_intensity = self.shader.light_intensity(
                         world_normal, face_center, camera_position
                     )
-                faces_to_draw.append(face)
+                front_faces.append(face)
 
             # world space to clip space
             clip_vertices = camera_matrix @ world_vertices
 
-            # perspective division
-            image_vertices = clip_vertices / clip_vertices[3]
-            # viewport transformation
-            screen_vertices = viewport_matrix @ image_vertices
+            for face in front_faces:
+                face.clip_vertices = clip_vertices[:, face.vertex_indices]
 
-            # update the face's with transformed vertices
+                # implement clipping against each of the clipping planes
+                faces = [face]
+                for check_inside, get_intersection in CLIPPING_PLANES:
+                    new_faces = []
+                    for face in faces:
+                        new_faces.extend(face.clip(check_inside, get_intersection))
+                    faces = new_faces
+                faces_to_draw.extend(faces)
+
             for face in faces_to_draw:
-                # w component is not needed anymore (it's always 1)
-                face.screen_vertices = screen_vertices[:3, face.vertex_indices]
+                # perspective division
+                face.image_vertices = face.clip_vertices / face.clip_vertices[3]
+                # viewport transformation
+                face.screen_vertices = (viewport_matrix @ face.image_vertices)[:3]
 
             mesh.faces_to_draw = faces_to_draw
 
@@ -87,7 +107,7 @@ class GraphicsPipeline:
             for face in mesh.faces_to_draw:
                 if face.screen_vertices is None:
                     continue
-                color = self.shader.get_color(*face.light_intensity, (255, 255, 255))
+                color = self.shader.get_color(*face.light_intensity, face.color)
                 # draw the triangle onto the display buffer,
                 # looking up the z buffer for hidden surface removal
                 draw_triangle(face.screen_vertices, display_buffer, z_buffer, color)
