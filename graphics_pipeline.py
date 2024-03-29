@@ -63,6 +63,16 @@ class GraphicsPipeline:
 
             mesh.faces_to_draw = faces_to_draw
 
+    def draw_wireframe(self):
+        self.screen.fill((255, 255, 255))
+        for mesh in self.meshs:
+            for face in mesh.faces_to_draw:
+                if face.screen_vertices is None:
+                    continue
+                color = (0, 0, 0)
+                points = face.screen_vertices[:2].T
+                pygame.draw.polygon(self.screen, color, points, 1)
+
     def draw(self):
         # draws the mesh's screen vertices onto the screen
         # ie, the rasterization step
@@ -84,12 +94,3 @@ class GraphicsPipeline:
 
         # blit the display buffer onto the screen
         pygame.surfarray.blit_array(self.screen, display_buffer)
-
-        # draw wireframe
-        for mesh in self.meshs:
-            for face in mesh.faces_to_draw:
-                if face.screen_vertices is None:
-                    continue
-                color = (255, 0, 0)
-                points = face.screen_vertices[:2].T
-                pygame.draw.polygon(self.screen, color, points, 1)
