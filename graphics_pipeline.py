@@ -136,3 +136,19 @@ class GraphicsPipeline:
                 )
 
         pygame.surfarray.blit_array(self.screen, display_buffer)
+
+    def draw_depth(self):
+        width, height = self.screen.get_size()
+        z_buffer = np.full((width, height), 1.0, dtype=np.float32)
+        display_buffer = np.zeros((width, height, 3), dtype=np.uint8)
+
+        for mesh in self.meshs:
+            for face in mesh.faces_to_draw:
+                if face.screen_vertices is None:
+                    continue
+                color = (255, 255, 255)
+                draw_triangle(face.screen_vertices, display_buffer, z_buffer, color)
+
+        z_buffer = (1 - z_buffer) * 255
+        display_buffer = np.stack([z_buffer] * 3, axis=-1).astype(np.uint8)
+        pygame.surfarray.blit_array(self.screen, display_buffer)
