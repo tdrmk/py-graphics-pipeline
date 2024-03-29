@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 from transformations import translate, rotate, scale, normalize
+from copy import copy
 
 
 class Face:
@@ -31,6 +32,59 @@ class Face:
                 self.world_vertices[:3, 1] - self.world_vertices[:3, 0],
             )
         )
+
+    # clips the face against the specified face in the clip space
+    def clip(self, check_inside, get_intersection):
+        # check if the vertex is inside the plane or not for each vertex
+        inside = [check_inside(vertex) for vertex in self.clip_vertices.T]
+        num_inside = sum(inside)  # number of vertices inside the plane
+        if num_inside == 0:
+            return []  # face is completely outside the plane
+        if num_inside == 3:
+            return [self]  # face is completely inside the plane
+
+        # face is partially inside the plane (ie, clipped by the plane)
+        cv, tc = self.clip_vertices, self.texture_coordinates
+
+        # compute the new vertices and texture coordinates
+        clipped_v = []  # clipped vertices (ie, vertices are all inside the plane)
+        clipped_tc = []  # clipped texture coordinates
+        for i in range(3):
+            if inside[i]:
+                clipped_v.append(cv[:, i])
+                if tc is not None:
+                    clipped_tc.append(tc[:, i])
+            if inside[i] != inside[(i + 1) % 3]:
+                t = get_intersection(cv[:, i], cv[:, (i + 1) % 3])
+                # v = v0 + t * (v1 - v0)
+                clipped_v.append(cv[:, i] + t * (cv[:, (i + 1) % 3] - cv[:, i]))
+                if tc is not None:
+                    # tc = tc0 + t * (tc1 - tc0)
+                    clipped_tc.append(tc[:, i] + t * (tc[:, (i + 1) % 3] - tc[:, i]))
+
+        # only one vertex is inside the plane
+        # face is formed by the two clipped vertices and the vertex inside the plane
+        if num_inside == 1:
+            face = copy(self)
+            face.clip_vertices = np.column_stack(clipped_v)
+            if tc is not None:
+                face.texture_coordinates = np.column_stack(clipped_tc)
+            return [face]
+
+        # two vertices are inside the plane (a four sided polygon is formed)
+        # we split the polygon into two triangles
+        # face1: v0, v1, v2
+        # face2: v0, v2, v3
+        if num_inside == 2:
+            face1, face2 = copy(self), copy(self)
+            v0, v1, v2, v3 = clipped_v
+            face1.clip_vertices = np.column_stack([v0, v1, v2])
+            face2.clip_vertices = np.column_stack([v0, v2, v3])
+            if tc is not None:
+                tc0, tc1, tc2, tc3 = clipped_tc
+                face1.texture_coordinates = np.column_stack([tc0, tc1, tc2])
+                face2.texture_coordinates = np.column_stack([tc0, tc2, tc3])
+            return [face1, face2]
 
 
 class Mesh:
