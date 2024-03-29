@@ -21,3 +21,7 @@ def load_texture_from_image(filename) -> Texture:
     texture = pygame.transform.flip(texture, False, True)
     texture = pygame.surfarray.array3d(texture)
     return Texture(texture)
+
+
+def random_texture(width, height):
+    return Texture(np.random.randint(0, 255, (width, height, 3), dtype=np.uint8))
