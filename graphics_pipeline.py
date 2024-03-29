@@ -1,7 +1,7 @@
 import pygame
 from transformations import viewport, normalize
 import numpy as np
-from rasterizer import draw_triangle
+from rasterizer import draw_triangle, draw_textured_triangle
 import clipping_functions
 
 CLIPPING_PLANES = [
@@ -113,4 +113,26 @@ class GraphicsPipeline:
                 draw_triangle(face.screen_vertices, display_buffer, z_buffer, color)
 
         # blit the display buffer onto the screen
+        pygame.surfarray.blit_array(self.screen, display_buffer)
+
+    def draw_textured(self):
+        width, height = self.screen.get_size()
+        z_buffer = np.full((width, height), 1.0, dtype=np.float32)
+        display_buffer = np.zeros((width, height, 3), dtype=np.uint8)
+
+        for mesh in self.meshs:
+            for face in mesh.faces_to_draw:
+                if face.screen_vertices is None:
+                    continue
+
+                draw_textured_triangle(
+                    face.screen_vertices,
+                    face.texture_coordinates,
+                    display_buffer,
+                    z_buffer,
+                    mesh.texture,
+                    face.light_intensity,
+                    self.shader,
+                )
+
         pygame.surfarray.blit_array(self.screen, display_buffer)

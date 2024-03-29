@@ -51,7 +51,13 @@ def draw_triangle(vertices, display_buffer, z_buffer, color):
 
 
 def draw_textured_triangle(
-    vertices, texture_coordinates, display_buffer, z_buffer, texture, shader=None
+    vertices,
+    texture_coordinates,
+    display_buffer,
+    z_buffer,
+    texture,
+    light_intensity=(1.0, 0.0, 0.0),
+    shader=None,
 ):
     # assuming vertices are in screen space (ie, face.screen_vertices)
     # and texture_coordinates are in texture space (ie, face.texture_coordinates)
@@ -122,5 +128,5 @@ def draw_textured_triangle(
                     z_buffer[x, y] = z
                     color = texture.sample(u, v)
                     if shader is not None:
-                        color = shader(color)
+                        color = shader.get_color(*light_intensity, color)
                     display_buffer[x, y] = color
