@@ -6,6 +6,21 @@ DIFFUSE_LIGHT = 0.6
 SPECULAR_LIGHT = 0.3
 SPECULAR_EXPONENT = 10
 
+
+def init_lighting(ambient=0.1, diffuse=0.6, specular=0.3, specular_exponent=10):
+    global AMBIENT_LIGHT, DIFFUSE_LIGHT, SPECULAR_LIGHT, SPECULAR_EXPONENT
+    assert 0 <= ambient <= 1
+    assert 0 <= diffuse <= 1
+    assert 0 <= specular <= 1
+    assert specular_exponent > 0
+    assert ambient + diffuse + specular <= 1
+
+    AMBIENT_LIGHT = ambient
+    DIFFUSE_LIGHT = diffuse
+    SPECULAR_LIGHT = specular
+    SPECULAR_EXPONENT = specular_exponent
+
+
 # A pixel shader that calculates the color of the fragment (ie, pixel)
 # assumes a single directional light source
 # reference: https://www.youtube.com/watch?v=TEjDYtkLRdQ
