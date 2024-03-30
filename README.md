@@ -29,7 +29,9 @@ To control the camera, use the following keys:
     ↓   rotate down
     ←   rotate left
     →   rotate right
+    
 
+https://github.com/tdrmk/py-graphics-pipeline/assets/12011280/503e5a97-d460-4837-ad95-a887cb4fb3aa
 
 ## References
 - [How do Video Game Graphics Work?](https://www.youtube.com/watch?v=C8YtdC8mxTU) :star:
