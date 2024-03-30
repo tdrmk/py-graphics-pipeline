@@ -1,4 +1,3 @@
-import pygame
 import numpy as np
 from transformations import translate, rotate, scale, normalize
 from copy import copy
@@ -23,6 +22,9 @@ class Face:
 
         # setting up some default color
         self.color = (255, 255, 255)
+
+        # store reference to mesh (for accessing the texture, and other properties)
+        self.mesh = None
 
     @property
     def world_normal(self):
@@ -100,6 +102,10 @@ class Mesh:
         self.position = np.array([0.0, 0.0, 0.0])
         self.rotation = np.array([0.0, 0.0, 0.0])
         self.scale = np.array([1.0, 1.0, 1.0])
+
+        # store reference to the mesh in each face
+        for face in faces:
+            face.mesh = self
 
     @property
     def world_matrix(self):

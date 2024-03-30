@@ -31,13 +31,19 @@ class GraphicsPipeline:
         viewport_matrix = viewport(*self.screen.get_size())
         camera_position = self.camera.position
 
+        self.faces_to_draw = []  # we'll computes faces to draw
+
         for mesh in self.meshs:
-            faces_to_draw = []  # we'll computes faces to draw for each mesh
             front_faces = []  # faces that are facing the camera
 
             world_matrix = mesh.world_matrix
             model_vertices = mesh.model_vertices
+
+            # model space to world space
             world_vertices = world_matrix @ model_vertices
+
+            # world space to clip space
+            clip_vertices = camera_matrix @ world_vertices
 
             # backface culling
             # here we'll be culling in world space
@@ -58,14 +64,11 @@ class GraphicsPipeline:
                     face.light_intensity = self.shader.light_intensity(
                         world_normal, face_center, camera_position
                     )
+
+                face.clip_vertices = clip_vertices[:, face.vertex_indices]
                 front_faces.append(face)
 
-            # world space to clip space
-            clip_vertices = camera_matrix @ world_vertices
-
             for face in front_faces:
-                face.clip_vertices = clip_vertices[:, face.vertex_indices]
-
                 # implement clipping against each of the clipping planes
                 faces = [face]
                 for check_inside, get_intersection in CLIPPING_PLANES:
@@ -73,25 +76,25 @@ class GraphicsPipeline:
                     for face in faces:
                         new_faces.extend(face.clip(check_inside, get_intersection))
                     faces = new_faces
-                faces_to_draw.extend(faces)
 
-            for face in faces_to_draw:
-                # perspective division
-                face.image_vertices = face.clip_vertices / face.clip_vertices[3]
-                # viewport transformation
-                face.screen_vertices = (viewport_matrix @ face.image_vertices)[:3]
+                # apply perspective division and viewport transformation,
+                # for each face obtained after clipping
+                for cface in faces:
+                    # perspective division
+                    cface.image_vertices = cface.clip_vertices / cface.clip_vertices[3]
+                    # viewport transformation
+                    cface.screen_vertices = (viewport_matrix @ cface.image_vertices)[:3]
 
-            mesh.faces_to_draw = faces_to_draw
+                self.faces_to_draw.extend(faces)
 
     def draw_wireframe(self):
         self.screen.fill((255, 255, 255))
-        for mesh in self.meshs:
-            for face in mesh.faces_to_draw:
-                if face.screen_vertices is None:
-                    continue
-                color = (0, 0, 0)
-                points = face.screen_vertices[:2].T
-                pygame.draw.polygon(self.screen, color, points, 1)
+        for face in self.faces_to_draw:
+            if face.screen_vertices is None:
+                continue
+            color = (0, 0, 0)
+            points = face.screen_vertices[:2].T
+            pygame.draw.polygon(self.screen, color, points, 1)
 
     def draw(self):
         # draws the mesh's screen vertices onto the screen
@@ -103,14 +106,13 @@ class GraphicsPipeline:
         # display buffer to store the final image to be displayed
         display_buffer = np.zeros((width, height, 3), dtype=np.uint8)
 
-        for mesh in self.meshs:
-            for face in mesh.faces_to_draw:
-                if face.screen_vertices is None:
-                    continue
-                color = self.shader.get_color(*face.light_intensity, face.color)
-                # draw the triangle onto the display buffer,
-                # looking up the z buffer for hidden surface removal
-                draw_triangle(face.screen_vertices, display_buffer, z_buffer, color)
+        for face in self.faces_to_draw:
+            if face.screen_vertices is None:
+                continue
+            color = self.shader.get_color(*face.light_intensity, face.color)
+            # draw the triangle onto the display buffer,
+            # looking up the z buffer for hidden surface removal
+            draw_triangle(face.screen_vertices, display_buffer, z_buffer, color)
 
         # blit the display buffer onto the screen
         pygame.surfarray.blit_array(self.screen, display_buffer)
@@ -120,20 +122,19 @@ class GraphicsPipeline:
         z_buffer = np.full((width, height), 1.0, dtype=np.float32)
         display_buffer = np.zeros((width, height, 3), dtype=np.uint8)
 
-        for mesh in self.meshs:
-            for face in mesh.faces_to_draw:
-                if face.screen_vertices is None:
-                    continue
+        for face in self.faces_to_draw:
+            if face.screen_vertices is None:
+                continue
 
-                draw_textured_triangle(
-                    face.screen_vertices,
-                    face.texture_coordinates,
-                    display_buffer,
-                    z_buffer,
-                    mesh.texture,
-                    face.light_intensity,
-                    self.shader,
-                )
+            draw_textured_triangle(
+                face.screen_vertices,
+                face.texture_coordinates,
+                display_buffer,
+                z_buffer,
+                face.mesh.texture,
+                face.light_intensity,
+                self.shader,
+            )
 
         pygame.surfarray.blit_array(self.screen, display_buffer)
 
@@ -142,12 +143,11 @@ class GraphicsPipeline:
         z_buffer = np.full((width, height), 1.0, dtype=np.float32)
         display_buffer = np.zeros((width, height, 3), dtype=np.uint8)
 
-        for mesh in self.meshs:
-            for face in mesh.faces_to_draw:
-                if face.screen_vertices is None:
-                    continue
-                color = (255, 255, 255)
-                draw_triangle(face.screen_vertices, display_buffer, z_buffer, color)
+        for face in self.faces_to_draw:
+            if face.screen_vertices is None:
+                continue
+            color = (255, 255, 255)
+            draw_triangle(face.screen_vertices, display_buffer, z_buffer, color)
 
         z_buffer = (1 - z_buffer) * 255
         display_buffer = np.stack([z_buffer] * 3, axis=-1).astype(np.uint8)
