@@ -62,6 +62,11 @@ def draw_textured_triangle(
     # assuming vertices are in screen space (ie, face.screen_vertices)
     # and texture_coordinates are in texture space (ie, face.texture_coordinates)
 
+    if texture_coordinates is None or texture is None:
+        # no texture or texture coordinates, just draw the triangle
+        draw_triangle(vertices, display_buffer, z_buffer, (255, 255, 255))
+        return
+
     width, height, _ = display_buffer.shape
 
     # sort vertices based on y-coordinate
